@@ -1,5 +1,7 @@
 module ActsAsTaggableOn
   class Tagging < ::ActiveRecord::Base #:nodoc:
+    acts_as_belongs_to_tenant
+
     attr_accessible :tag,
                     :tag_id,
                     :context,
@@ -8,7 +10,8 @@ module ActsAsTaggableOn
                     :taggable_id,
                     :tagger,
                     :tagger_type,
-                    :tagger_id
+                    :tagger_id,
+                    :tenant_id
 
     belongs_to :tag, :class_name => 'ActsAsTaggableOn::Tag'
     belongs_to :taggable, :polymorphic => true

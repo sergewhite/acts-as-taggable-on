@@ -3,6 +3,7 @@ class ActsAsTaggableOnMigration < ActiveRecord::Migration
     create_table :tags do |t|
       t.string :name
       t.text :description
+      t.integer :tenant_id
     end
 
     create_table :taggings do |t|
@@ -18,6 +19,7 @@ class ActsAsTaggableOnMigration < ActiveRecord::Migration
       t.string :context, :limit => 128
 
       t.boolean :primary, :default => false
+      t.integer :tenant_id
       t.datetime :created_at
     end
 

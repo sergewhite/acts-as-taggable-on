@@ -1,8 +1,10 @@
 module ActsAsTaggableOn
   class Tag < ::ActiveRecord::Base
+    acts_as_belongs_to_tenant
+
     include ActsAsTaggableOn::Utils
 
-    attr_accessible :name, :description
+    attr_accessible :name, :description, :tenant_id
 
     ### ASSOCIATIONS:
 
@@ -11,25 +13,24 @@ module ActsAsTaggableOn
     ### VALIDATIONS:
 
     validates_presence_of :name
-    validates_uniqueness_of :name
-    validates_length_of :name, :maximum => 255
+    validates :name, :uniqueness => {:scope => :tenant_id}, :length => {:maximum => 255}
 
     ### SCOPES:
 
     def self.named(name)
-      where(["lower(name) = ?", name.downcase])
+      by_tenant.where(["lower(name) = ?", name.downcase])
     end
 
     def self.named_any(list)
-      where(list.map { |tag| sanitize_sql(["lower(name) = ?", tag.to_s.downcase]) }.join(" OR "))
+      by_tenant.where(list.map { |tag| sanitize_sql(["lower(name) = ?", tag.to_s.downcase]) }.join(" OR "))
     end
 
     def self.named_like(name)
-      where(["name #{like_operator} ? ESCAPE '!'", "%#{escape_like(name)}%"])
+      by_tenant.where(["name #{like_operator} ? ESCAPE '!'", "%#{escape_like(name)}%"])
     end
 
     def self.named_like_any(list)
-      where(list.map { |tag| sanitize_sql(["name #{like_operator} ? ESCAPE '!'", "%#{escape_like(tag.to_s)}%"]) }.join(" OR "))
+      by_tenant.where(list.map { |tag| sanitize_sql(["name #{like_operator} ? ESCAPE '!'", "%#{escape_like(tag.to_s)}%"]) }.join(" OR "))
     end
 
     ### CLASS METHODS:
