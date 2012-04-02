@@ -68,6 +68,16 @@ module ActsAsTaggableOn
       read_attribute(:count).to_i
     end
 
+    def merge_with other_tag
+      ActsAsTaggableOn::Tag.transaction do
+        #replace all tagging with id of new tag
+        #do we need to check tenant here also
+        ActsAsTaggableOn::Tagging.where(:tag_id=>other_tag.id).update_all(:tag_id => self.id)
+        #delete old tag
+        ActsAsTaggableOn::Tag.destroy(other_tag.id)
+      end
+    end
+
     class << self
       private
         def comparable_name(str)
