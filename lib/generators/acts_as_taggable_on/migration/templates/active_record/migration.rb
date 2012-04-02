@@ -16,6 +16,7 @@ class ActsAsTaggableOnMigration < ActiveRecord::Migration
       # http://bit.ly/vgW2Ql
       t.string :context, :limit => 128
 
+      t.boolean :primary, :default => false
       t.datetime :created_at
     end
 

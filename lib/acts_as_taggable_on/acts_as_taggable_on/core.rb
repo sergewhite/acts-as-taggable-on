@@ -7,9 +7,11 @@ module ActsAsTaggableOn::Taggable
       base.class_eval do
         attr_writer :custom_contexts
         after_save :save_tags
+        after_save :save_primary_tag
       end
 
       base.initialize_acts_as_taggable_on_core
+      base.initialize_acts_as_taggable_on_core_plus_primary
     end
 
     module ClassMethods
@@ -52,9 +54,30 @@ module ActsAsTaggableOn::Taggable
         end
       end
 
+      def initialize_acts_as_taggable_on_core_plus_primary
+        tag_types.map(&:to_s).each do |tags_type|
+          tag_type         = tags_type.to_s.singularize
+
+          class_eval %(
+            def #{tag_type}_primary_tag
+              if primary_tag_name = instance_variable_get("@#{tag_type}_primary_tag")
+                primary_tag_name
+              elsif primary_tag = #{tags_type}.where("taggings.primary = 't'").first
+                primary_tag.name
+              end
+            end
+
+            def #{tag_type}_primary_tag=(new_tag)
+              set_primary_tag_on('#{tags_type}', new_tag)
+            end
+          )
+        end
+      end
+
       def taggable_on(preserve_tag_order, *tag_types)
         super(preserve_tag_order, *tag_types)
         initialize_acts_as_taggable_on_core
+        initialize_acts_as_taggable_on_core_plus_primary
       end
       
       # all column names are necessary for PostgreSQL group clause
@@ -330,6 +353,48 @@ module ActsAsTaggableOn::Taggable
           # Create new taggings:
           new_tags.each do |tag|
             taggings.create!(:tag_id => tag.id, :context => context.to_s, :taggable => self)
+          end
+        end
+
+        true
+      end
+
+      # PRIMARY TAG STUFF:
+      def set_primary_tag_on(context, new_primary_tag)
+        add_custom_context(context)
+
+        variable_name = "@#{context.to_s.singularize}_primary_tag"
+        instance_variable_set(variable_name, new_primary_tag)
+      end
+
+      def primary_tag_cache_set_on(context)
+        variable_name = "@#{context.to_s.singularize}_primary_tag"
+        !instance_variable_get(variable_name).nil?
+      end
+
+      def primary_tag_cache_on(context)
+        variable_name = "@#{context.to_s.singularize}_primary_tag"
+        instance_variable_get(variable_name) || instance_variable_set(variable_name, ActsAsTaggableOn::TagList.new(tags_on(context).map(&:name)))
+      end
+
+      def save_primary_tag
+        tagging_contexts.each do |context|
+          next unless primary_tag_cache_set_on(context)
+
+          tag_name = instance_variable_get("@#{context.to_s.singularize}_primary_tag")
+          taggings.update_all({:primary => false}, {:context => context.to_s, :taggable_id => self.id})
+
+          unless tag_name.blank?
+            # Find existing tag or create non-existing tag:
+            tag = ActsAsTaggableOn::Tag.by_tenant.find_or_create_by_name(tag_name)
+
+            # Create or update tagging:
+            tagging = taggings.where(:tag_id => tag.id, :context => context.to_s, :taggable_id => self.id).first ||
+                      taggings.create(:tag_id => tag.id, :context => context.to_s, :taggable_id => self.id)
+            tagging.primary = true
+            if tagging.save!
+              send("#{context.to_s.singularize}_list")
+            end
           end
         end
 

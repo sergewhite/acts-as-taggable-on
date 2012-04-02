@@ -2,6 +2,7 @@
 *.sqlite3
 /pkg/*
 .bundle
+.idea
 .rvmrc
 Gemfile.lock
 spec/database.yml
