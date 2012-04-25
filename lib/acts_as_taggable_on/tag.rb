@@ -13,7 +13,7 @@ module ActsAsTaggableOn
     ### VALIDATIONS:
 
     validates_presence_of :name
-    validates :name, :uniqueness => {:scope => :tenant_id}, :length => {:maximum => 255}
+    validates :name, :uniqueness => {:scope => :tenant_id, :case_sensitive => false}, :length => {:maximum => 255}
 
     ### SCOPES:
 
