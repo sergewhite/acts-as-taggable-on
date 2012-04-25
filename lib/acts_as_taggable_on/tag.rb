@@ -72,7 +72,8 @@ module ActsAsTaggableOn
       ActsAsTaggableOn::Tag.transaction do
         #replace all tagging with id of new tag
         #do we need to check tenant here also
-        ActsAsTaggableOn::Tagging.where(:tag_id=>other_tag.id).update_all(:tag_id => self.id)
+        taggable_ids = ActsAsTaggableOn::Tagging.where(:tag_id => self.id).map(&:taggable_id)
+        ActsAsTaggableOn::Tagging.where("tag_id = #{other_tag.id} AND taggable_id NOT IN (#{taggable_ids.join(',')})").update_all(:tag_id => self.id)
         #delete old tag
         ActsAsTaggableOn::Tag.destroy(other_tag.id)
       end
