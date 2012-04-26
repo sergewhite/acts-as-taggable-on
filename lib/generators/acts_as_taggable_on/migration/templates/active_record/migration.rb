@@ -4,6 +4,7 @@ class ActsAsTaggableOnMigration < ActiveRecord::Migration
       t.string :name
       t.text :description
       t.integer :tenant_id
+      t.integer :parent_id
     end
 
     create_table :taggings do |t|

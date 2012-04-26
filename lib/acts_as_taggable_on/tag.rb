@@ -9,7 +9,10 @@ module ActsAsTaggableOn
     ### ASSOCIATIONS:
 
     has_many :taggings, :dependent => :destroy, :class_name => 'ActsAsTaggableOn::Tagging'
+    has_many :children, :class_name => "ActsAsTaggableOn::Tag", :foreign_key => "parent_id"
+    belongs_to :parent, :class_name => "ActsAsTaggableOn::Tag", :foreign_key => "parent_id"
 
+    before_destroy :nullify_parent_id_for_tags
     ### VALIDATIONS:
 
     validates_presence_of :name
@@ -46,9 +49,9 @@ module ActsAsTaggableOn
 
       existing_tags = Tag.named_any(list).all
       new_tag_names = list.reject do |name|
-                        name = comparable_name(name)
-                        existing_tags.any? { |tag| comparable_name(tag.name) == name }
-                      end
+        name = comparable_name(name)
+        existing_tags.any? { |tag| comparable_name(tag.name) == name }
+      end
       created_tags  = new_tag_names.map { |name| Tag.create(:name => name) }
 
       existing_tags + created_tags
@@ -79,11 +82,15 @@ module ActsAsTaggableOn
       end
     end
 
+    def nullify_parent_id_for_tags
+      self.tags.update_all(:parent_id => nil)
+    end
+
     class << self
       private
-        def comparable_name(str)
-          str.mb_chars.downcase.to_s
-        end
+      def comparable_name(str)
+        str.mb_chars.downcase.to_s
+      end
     end
   end
 end
