@@ -4,7 +4,7 @@ module ActsAsTaggableOn
 
     include ActsAsTaggableOn::Utils
 
-    attr_accessible :name, :description, :tenant_id
+    attr_accessible :name, :description, :tenant_id, :parent_id
 
     ### ASSOCIATIONS:
 
