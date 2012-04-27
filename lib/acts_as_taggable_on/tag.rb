@@ -12,11 +12,15 @@ module ActsAsTaggableOn
     has_many :children, :class_name => "ActsAsTaggableOn::Tag", :foreign_key => "parent_id"
     belongs_to :parent, :class_name => "ActsAsTaggableOn::Tag", :foreign_key => "parent_id"
 
+    ### CALLBACKS:
+
     before_destroy :nullify_parent_id_for_tags
+
     ### VALIDATIONS:
 
     validates_presence_of :name
     validates :name, :uniqueness => {:scope => :tenant_id, :case_sensitive => false}, :length => {:maximum => 255}
+    validate :check_parent
 
     ### SCOPES:
 
@@ -82,9 +86,6 @@ module ActsAsTaggableOn
       end
     end
 
-    def nullify_parent_id_for_tags
-      self.tags.update_all(:parent_id => nil)
-    end
 
     class << self
       private
@@ -92,5 +93,16 @@ module ActsAsTaggableOn
         str.mb_chars.downcase.to_s
       end
     end
+
+    private
+    def check_parent
+      errors.add(:base, "wrong parent. tag '#{self.class.find(self.parent_id).name}' is a child for this tag") if self.children.map(&:id).include?(self.parent_id)
+      errors.add(:base, "wrong parent. parent can not point to self") if self.parent_id == self.id
+    end
+
+    def nullify_parent_id_for_tags
+      self.tags.update_all(:parent_id => nil)
+    end
+
   end
 end
