@@ -20,7 +20,7 @@ module ActsAsTaggableOn
 
     validates_presence_of :name
     validates :name, :uniqueness => {:scope => :tenant_id, :case_sensitive => false}, :length => {:maximum => 255}
-    validate :check_parent
+    validate :check_parent, :on => :update
 
     ### SCOPES:
 
