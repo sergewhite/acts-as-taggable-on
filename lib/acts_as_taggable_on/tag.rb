@@ -14,7 +14,7 @@ module ActsAsTaggableOn
 
     ### CALLBACKS:
 
-    before_destroy :nullify_parent_id_for_tags
+    before_destroy :nullify_parent_id_for_children
 
     ### VALIDATIONS:
 
@@ -100,8 +100,8 @@ module ActsAsTaggableOn
       errors.add(:base, "wrong parent. parent can not point to self") if self.parent_id == self.id
     end
 
-    def nullify_parent_id_for_tags
-      self.tags.update_all(:parent_id => nil)
+    def nullify_parent_id_for_children
+      self.children.update_all(:parent_id => nil)
     end
 
   end
