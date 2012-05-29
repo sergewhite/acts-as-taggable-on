@@ -25,4 +25,10 @@ describe ActsAsTaggableOn::Tagging do
     }.should change(ActsAsTaggableOn::Tagging, :count).by(1)
   end
   
+  it "should increment_counter" do
+  end
+  
+  it "should decrement_counter" do
+  end
+  
 end
